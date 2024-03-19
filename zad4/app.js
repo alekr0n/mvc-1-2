@@ -1,51 +1,52 @@
-const express = require('express');
-const app = express();
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const home = require('./views/home');
+const student = require('./views/student');
+
 const PORT = 3000;
-const routes = require('./routes/index');
-const bodyParser = require('body-parser');
 
-app.set('port', PORT);
+let studentData = {};
 
-app.listen(PORT, () => {
-  console.log(`Server is running on ${PORT}`);
+const server = http.createServer((req, res) => {
+  if (req.url === '/' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(home.renderPage());
+  } else if (req.url === '/student' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(student.renderPage(studentData));
+  } else if (req.url === '/student' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      const parsedBody = new URLSearchParams(body);
+      studentData = {
+        name: parsedBody.get('name'),
+        lastname: parsedBody.get('lastname'),
+        age: parsedBody.get('age'),
+        gender: parsedBody.get('gender'),
+        code: parsedBody.get('code'),
+        studyField: parsedBody.get('studyField')
+      };
+      fs.writeFile(path.join(__dirname, 'data', `${studentData.code}.txt`), body, err => {
+        if (err) {
+          res.writeHead(500, { 'Content-Type': 'text/html' });
+          res.end('Error saving data');
+          return;
+        }
+        res.writeHead(302, { 'Location': '/student' });
+        res.end();
+      });
+    });
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/html' });
+    res.end('404 Not Found');
+  }
 });
 
-app.get('/', (req, res) => {
-  res.render('home', { title: 'Strona główna' });
-});
-
-app.get('/student', (req, res) => {
-  res.render('student', { title: 'Strona studenta' });
-});
-
-app.set('views', './views');
-app.set('view engine', 'html');
-
-app.use(bodyParser.urlencoded({ extended: true }));
-
-app.use('/', routes);
-
-app.use((req, res) => {
-  res.status(404).send('404 Not Found');
-});
-
-app.post('/student', (req, res) => {
-  const { firstName, lastName, age, gender, code, studyField } = req.body;
-  const studentData = {
-    firstName,
-    lastName,
-    age,
-    gender,
-    code,
-    studyField
-  };
-  console.log('Dane formularza:', req.body);
-  res.redirect('/');
-
-  fs.writeFile(`${code}.txt`, JSON.stringify(studentData), (err) => {
-    if (err) throw err;
-    console.log('Dane zostały zapisane do pliku.');
-  });
-
-  res.render('student', { title: 'Student profile', studentData });
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

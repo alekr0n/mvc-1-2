@@ -1,12 +1,16 @@
-const express = require('express');
-const router = express.Router();
+const home = require('../views/home');
+const student = require('../views/student');
 
-router.get('/', (req, res) => {
-  res.render('home', { title: 'Strona główna' });
-});
+function handleHome(req, res) {
+  res.writeHead(200, {'Content-Type': 'text/html'});
+  res.end(home.renderPage());
+}
 
-router.get('/student', (req, res) => {
-  res.render('student', { title: 'Strona studenta' });
-});
+function handleStudent(req, res) {
 
-module.exports = router;
+}
+
+module.exports = {
+  handleHome,
+  handleStudent
+};

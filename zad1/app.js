@@ -1,28 +1,11 @@
-const express = require('express');
-const app = express();
+const http = require('http');
 const PORT = 3000;
 
-app.set('port', PORT);
+const server = http.createServer((req, res) => {
+  res.writeHead(200, {'Content-Type': 'text/html'});
+  res.end('<h1>Lab2</h1>');
+});
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
-});
-
-app.get('/', (req, res) => {
-  res.render('home', { title: 'Strona główna' });
-});
-
-app.get('/student', (req, res) => {
-  res.render('student', { title: 'Strona studenta' });
-});
-
-app.set('views', './views');
-app.set('view engine', 'html');
-
-app.engine('html', function (filePath, options, callback) {
-  fs.readFile(filePath, function (err, content) {
-    if (err) return callback(err)
-    var rendered = content.toString().replace(/NAZWA_PLIKU/g, options.title);
-    return callback(null, rendered);
-  });
 });
